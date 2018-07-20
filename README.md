@@ -4,7 +4,7 @@ This C++ plugin provides the iRODS platform a rule engine that allows iRODS rule
 
 # Build
 
-Building the iRODS Python Rule Engine Plugin requires version 4.2.1 of the iRODS software from github (http://github.com/irods/irods).
+Building the iRODS Python Rule Engine Plugin requires version 4.2.x of the iRODS software from github (http://github.com/irods/irods).
 
 ```
 cd irods_rule_engine_plugin_python
@@ -24,7 +24,9 @@ The packages produced by CMake will install the Python plugin shared object file
 
 After installing the plugin, `/etc/irods/server_config.json` needs to be configured to use the plugin.
 
-Add a new stanza to the "rule_engines" array within `server_config.json`:
+Python rules will be loaded from `core.py` (located at `/etc/irods/core.py` in a default installation).
+
+To activate the plugin, add a new stanza to the "rule_engines" array within `server_config.json`:
 
 ```json
 {
@@ -36,10 +38,30 @@ Add a new stanza to the "rule_engines" array within `server_config.json`:
 
 Adding the Python Rule Engine Plugin stanza above the default "irods_rule_engine_plugin-irods_rule_language" stanza will allow any defined Python rules to take precedence over any similarly named rules in the iRODS Rule Language.
 
-Python rules will be loaded from `core.py` (located at `/etc/irods/core.py` in a default installation).
+As soon as the stanza is inserted, the iRODS core will a Python source code module to exist at the path `/etc/irods/core.py`. Once imported by the iRODS server and successfully compile to a Python byte-code file bearing the ".pyc" extension, any functions in the module will be callable as rules as long as they conform to a  calling convention
+```
+def a_python_rule( rule_args , callback , rei ):
+  # ... Python code to be executed in the rule context...
+```
+although the parameters need not be explicit or even named as they are here; they could in fact be collapsed into a parameter tuple, as in **pyfn(\*x)**. The first argument above, `rule_args`, is a tuple containing the optional, positional parameters fed to the rule function by its caller; these same parameters may be written to, with the effect that the written values will be returned to the caller. The `callback` object is effectively a gateway through which other rules (even those managed by other rule engine plugins) and microservices may be called. Finally, `rei` (also known as "rule exec info") is an object carrying iRODS-related context for the current rule call, including e.g. session variables.
 
-# Other
+When the plugin is freshly installed, a file `core.py.template` will exist in the directory
+`/etc/irods`. This may be copied to `/etc/irods/core.py` , or else an empty `core.py` can be created at that path if the user prefers to begin from scratch.
 
-- The example `core.py` file in this repository contains a Python implementation of all static policy enforcement points (PEPs) from a default `core.re` rulebase.
+# Miscellaneous points
+
+- The example `core.py.template` file in this repository contains a Python implementation of all static policy enforcement points (PEPs) from a default `core.re` rulebase.
 
 - This version of the Python Rule Engine Plugin uses the Python 2.7 interpreter.
+
+- Some python identifiers, such as `global_vars` (a lookup for accessing variables of the form `*var` from the `INPUT` line, if present) and `irods_types` (a module containing common struct types used for communicating with microservices) are automatically imported into the python interpreter that executes `core.py`.
+
+# Auxiliary Python modules
+
+Included with the Python Rule Engine Plugin are some other modules that provide a solid foundation of utility for writers of Python rule code.
+
+## `session_vars.py`
+This module can be directly imported by `core.py` and contains a function `get_map` used to extract session variables from the `rei` parameter passed to any rule function.
+
+## `genquery_iterator.py`
+Two styles of Python iterator are offered by this module, one allowing convenient access to GenQuery results from within Python rules.  One iterator allows paginated iteration (returning between 1 and 256 rows at a time in the form of a Python list) and the other allows row-at-a-time iteration via Python's generator API.
