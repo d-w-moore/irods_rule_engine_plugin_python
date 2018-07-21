@@ -61,7 +61,7 @@ When the plugin is freshly installed, a file `core.py.template` will exist in th
 Included with the Python Rule Engine Plugin are some other modules that provide a solid foundation of utility for writers of Python rule code.
 
 ## `session_vars.py`
-This module can be directly imported by `core.py` and contains a function `get_map` used to extract session variables from the `rei` parameter passed to any rule function.
+This module can be directly imported by `core.py` and contains a function `get_map` used to extract session variables from the `rei` parameter passed to any rule function. An example follows:
 
 ```
 import session_vars
@@ -100,7 +100,8 @@ while the other returns each row result via a Python generator object:
         "name = {0} ; size = {1}" . format( dObj['DATA_NAME'], dObj['DATA_SIZE'] )
       )
 ```
-In the case of each iterator, both paged and generator-driven:
-The first argument iterator is either a string with comma-separated column names,or a list of column names.
-Second is the condition, literally the way it would be written in the genquery string.
-The argument to the iterator, a Python boolean, is an "as_dict"
+In the case of each iterator, whether paged or generator-driven:
+  * The first argument iterator is either a string with comma-separated column names,or a list of column names.
+  * Second is the condition, literally the way it would be written in the genquery string.
+  * The third argument to the iterator, a Python boolean, is an "as_dict" parameter that specifies whether a python dict (key-value) lookup or an integer-indexable python list is desired to represent each row
+  
