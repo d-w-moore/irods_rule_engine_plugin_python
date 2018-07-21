@@ -38,7 +38,7 @@ To activate the plugin, add a new stanza to the "rule_engines" array within `ser
 
 Adding the Python Rule Engine Plugin stanza above the default "irods_rule_engine_plugin-irods_rule_language" stanza will allow any defined Python rules to take precedence over any similarly named rules in the iRODS Rule Language.
 
-As soon as the stanza is inserted, the iRODS core will a Python source code module to exist at the path `/etc/irods/core.py`. Once imported by the iRODS server and successfully compile to a Python byte-code file bearing the ".pyc" extension, any functions in the module will be callable as rules as long as they conform to a  calling convention
+As soon as the stanza is inserted, the iRODS core expects a Python source code module to exist at the path `/etc/irods/core.py`. Once imported by the iRODS server and successfully compile to a Python byte-code file bearing the ".pyc" extension, any functions in the module will be callable as rules as long as they conform to a  calling convention
 ```
 def a_python_rule( rule_args , callback , rei ):
   # ... Python code to be executed in the rule context...
