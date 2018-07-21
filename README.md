@@ -63,5 +63,44 @@ Included with the Python Rule Engine Plugin are some other modules that provide 
 ## `session_vars.py`
 This module can be directly imported by `core.py` and contains a function `get_map` used to extract session variables from the `rei` parameter passed to any rule function.
 
+```
+import session_vars
+def get_irods_username (rule_args, callback, rei):
+  username = ''
+  var_map = session_vars.get_map(rei)
+  user_type = rule_args[0] or 'client_user'
+  userrec = var_map.get(user_type,'')
+  if userrec:
+    username = userrec.get('user_name','')
+  rule_args [0] = username
+```
+
 ## `genquery_iterator.py`
-Two styles of Python iterator are offered by this module, one allowing convenient access to GenQuery results from within Python rules.  One iterator allows paginated iteration (returning between 1 and 256 rows at a time in the form of a Python list) and the other allows row-at-a-time iteration via Python's generator API.
+Two styles of Python iterator are offered by this module, one allowing convenient
+access to GenQuery results from within Python rules.  One iterator allows paged
+results of N rows at a time over each iteration (returning between 1 and 256
+rows at a time in the form of a Python list):
+
+```
+  iter = PREP_genquery_row_list_iterator (
+           ["sum(DATA_SIZE)"], "DATA_NAME like 'file_%.dat'", 
+           False, # says we want an integer-indexed row, not key-value lookup
+           callback , N_rows_per_page=1
+  ) 
+  for row in iter:  # ---> one row returned with sum of size of matching data objects
+    writeLine('serverLog',
+      'result = {}'.format( row[0] ))
+```
+
+while the other returns each row result via a Python generator object:
+
+```
+  for dObj in PREP_genquery_row_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback):
+      callback.writeLine ("serverLog",
+        "name = {0} ; size = {1}" . format( dObj['DATA_NAME'], dObj['DATA_SIZE'] )
+      )
+```
+In the case of each iterator, both paged and generator-driven:
+The first argument iterator is either a string with comma-separated column names,or a list of column names.
+Second is the condition, literally the way it would be written in the genquery string.
+The argument to the iterator, a Python boolean, is an "as_dict"
