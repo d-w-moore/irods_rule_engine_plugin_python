@@ -66,10 +66,20 @@ class PREP_genquery_row_list_iterator (object):
     self.generator =  PREP_genquery_row_iterator (columns, conditions, as_dict, callback)
 
   def __iter__(self): return self
-  def next(self): return self.__next__()
+  def __next__(self): return self.next()
 
-  def __next__(self): 
-    return [ next(self.generator) for i in range(self.rows_per_page) ]
+  def next(self): 
+    results = list( range(self.rows_per_page) )
+    j = 0
+    try:
+      while j < len(results):
+        results[j] = next(self.generator)
+        j += 1
+    except StopIteration:
+      if j == 0: raise
+      del results[j:]
+
+    return results
 
 #       
 #  Test the above iterators : call with (like_rhs_path , nrows_as_string)
@@ -84,6 +94,8 @@ def test_PREP_genquery_iterator( rule_args , callback, rei ):
   requested_rowcount = str( rule_args[1] )
 
   conditions = ("COLL_NAME = '{0}' AND DATA_NAME like '{1}'").format(coll_name, data_obj_name_pattern )
+
+  nr = 0
 
   n = 0
 
@@ -100,6 +112,7 @@ def test_PREP_genquery_iterator( rule_args , callback, rei ):
          "n={0},i={1} ;  name = {2} ; size = {3}" . format(n, i, dObj['DATA_NAME'], dObj['DATA_SIZE'] )
         )
         n += 1; i += 1
+        nr += 1
 
   else:
 
@@ -110,4 +123,7 @@ def test_PREP_genquery_iterator( rule_args , callback, rei ):
         "n = {0} ; name = {1} ; size = {2}" . format( n, dObj['DATA_NAME'], dObj['DATA_SIZE'] )
       )
       n += 1
+      nr += 1
+
+  rule_args[0] = str( nr )
 
