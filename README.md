@@ -58,7 +58,7 @@ When the plugin is freshly installed, a file `core.py.template` will exist in th
 
 # Auxiliary Python modules
 
-Included with the Python Rule Engine Plugin are some other modules that provide a solid foundation of utility for writers of Python rule code.  The plugin directly loads only the module `/etc/irods/core.py`, however any import statements in that file are honored if the modules they target are in the interpreter's import path (`sys.path`).  In addition, `rods`  admin may use `irule` to execute Python rules within `.r` files.  By default, `/etc/irods` is included in the import path, meaning that the modules discussed in this section are accessible to other Python modules and functions (whether or not they are "rules" proper) once the plugin has loaded it.
+Included with the PREP (Python Rule Engine Plugin) are some other modules that provide a solid foundation of utility for writers of Python rule code.  The plugin directly loads only the module `/etc/irods/core.py`, however any import statements in that file are honored if the modules they target are in the interpreter's import path (`sys.path`).  In addition, `rods`  admin may use `irule` to execute Python rules within `.r` files.  By default, `/etc/irods` is included in the import path, meaning that the modules discussed in this section are accessible to all other Python modules and functions (whether or not they are "rules" proper) whether they be internal to `core.py`, or concomitantly or subsequently loaded by the PREP.
 
 ## `session_vars.py`
 This module contains a function `get_map` which may be used to extract session variables from the `rei` parameter passed to any rule function. An example follows:
