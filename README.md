@@ -54,14 +54,14 @@ When the plugin is freshly installed, a file `core.py.template` will exist in th
 
 - This version of the Python Rule Engine Plugin uses the Python 2.7 interpreter.
 
-- Some python identifiers, such as `global_vars` (a lookup for accessing variables of the form `*var` from the `INPUT` line, if present) and `irods_types` (a module containing common struct types used for communicating with microservices) are automatically imported into the python interpreter that executes `core.py`.
+- Some python identifiers, such as `global_vars` (a lookup for accessing variables of the form `*var` from the `INPUT` line, if present) and `irods_types` (a module containing common struct types used for communicating with microservices) are automatically imported into the python interpreter that loads `core.py`.
 
 # Auxiliary Python modules
 
-Included with the Python Rule Engine Plugin are some other modules that provide a solid foundation of utility for writers of Python rule code.
+Included with the Python Rule Engine Plugin are some other modules that provide a solid foundation of utility for writers of Python rule code.  The plugin directly loads only the module `/etc/irods/core.py`, however any import statements in that file are honored if the modules they target are in the interpreter's import path (`sys.path`).  In addition, `rods`  admin may use `irule` to execute Python rules within `.r` files.  By default, `/etc/irods` is included in the import path, meaning that the modules discussed in this section are accessible to other Python modules and functions (whether or not they are "rules" proper) once the plugin has loaded it.
 
 ## `session_vars.py`
-This module can be directly imported by `core.py` and contains a function `get_map` used to extract session variables from the `rei` parameter passed to any rule function. An example follows:
+This module contains a function `get_map` which may be used to extract session variables from the `rei` parameter passed to any rule function. An example follows:
 
 ```
 import session_vars
@@ -76,8 +76,8 @@ def get_irods_username (rule_args, callback, rei):
 ```
 
 ## `genquery_iterator.py`
-Two styles of Python iterator are offered by this module, one allowing convenient
-access to GenQuery results from within Python rules.  One iterator allows paged
+Two styles of Python iterator are offered by this module to allow a convenient way
+of accessing GenQuery results from within Python rules.  One iterator allows paged
 results of N rows at a time over each iteration (returning between 1 and 256
 rows at a time in the form of a Python list):
 
