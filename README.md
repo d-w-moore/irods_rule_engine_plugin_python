@@ -4,7 +4,7 @@ This C++ plugin provides the iRODS platform a rule engine that allows iRODS rule
 
 # Build
 
-Building the iRODS Python Rule Engine Plugin requires version 4.2.x of the iRODS software from github (http://github.com/irods/irods).
+Building the iRODS Python Rule Engine Plugin requires version 4.2.1+ of the iRODS software from github (http://github.com/irods/irods).
 
 ```
 cd irods_rule_engine_plugin_python
@@ -24,7 +24,7 @@ The packages produced by CMake will install the Python plugin shared object file
 
 After installing the plugin, `/etc/irods/server_config.json` needs to be configured to use the plugin.
 
-Python rules will be loaded from `core.py` (located at `/etc/irods/core.py` in a default installation).
+Python rules will be loaded from `core.py` (located at `/etc/irods/core.py.template` in a default installation).
 
 To activate the plugin, add a new stanza to the "rule_engines" array within `server_config.json`:
 
@@ -75,14 +75,14 @@ def get_irods_username (rule_args, callback, rei):
   rule_args [0] = username
 ```
 
-## `genquery_iterator.py`
+## `genquery.py`
 Two styles of Python iterator are offered by this module to allow a convenient way
 of accessing GenQuery results from within Python rules.  One iterator allows paged
 results of N rows at a time over each iteration (returning between 1 and 256
 rows at a time in the form of a Python list):
 
 ```
-  iter = PREP_genquery_row_list_iterator (
+  iter = paged_iterator (
            ["sum(DATA_SIZE)"], "DATA_NAME like 'file_%.dat'", 
            False, # says we want an integer-indexed row, not key-value lookup
            callback , N_rows_per_page=1
@@ -95,13 +95,13 @@ rows at a time in the form of a Python list):
 while the other returns each row result via a Python generator object:
 
 ```
-  for dObj in PREP_genquery_row_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback):
+  for dObj in row_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback):
       callback.writeLine ("serverLog",
         "name = {0} ; size = {1}" . format( dObj['DATA_NAME'], dObj['DATA_SIZE'] )
       )
 ```
 In the case of each iterator, whether paged or generator-driven:
-  * The first argument iterator is either a string with comma-separated column names,or a list of column names.
-  * Second is the condition, literally the way it would be written in the genquery string.
+  * The first argument iterator is either a string with comma-separated column names, or a list of column names.
+  * Second is the where condition of the query
   * The third argument to the iterator, a Python boolean, is an "as_dict" parameter that specifies whether a python dict (key-value) lookup or an integer-indexable python list is desired to represent each row
   

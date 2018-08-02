@@ -108,7 +108,7 @@ install(
 
 install(
     FILES ${CMAKE_SOURCE_DIR}/core.py.template ${CMAKE_SOURCE_DIR}/session_vars.py
-    FILES ${CMAKE_SOURCE_DIR}/core.py.template ${CMAKE_SOURCE_DIR}/genquery_iterate.py
+    FILES ${CMAKE_SOURCE_DIR}/core.py.template ${CMAKE_SOURCE_DIR}/genquery.py
   DESTINATION etc/irods
   )
 

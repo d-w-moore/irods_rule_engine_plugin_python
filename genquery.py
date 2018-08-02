@@ -11,7 +11,7 @@ def is_CAT_NO_ROWS_FOUND (ret_val):
 # :::::              generator-style query iterator              :::::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-def PREP_genquery_row_iterator ( columns, conditions, as_dict, callback ):
+def row_iterator ( columns, conditions, as_dict, callback ):
 
   column_idx = {}
 
@@ -20,7 +20,7 @@ def PREP_genquery_row_iterator ( columns, conditions, as_dict, callback ):
       columns = map (lambda obj: obj.strip(), columns.split(","))
     else:
       raise bad_column_spec ( "Column argument '{!r}' should be column names " \
-                               "as list or CSV string".format(columns))
+                               "as list or comma separated string".format(columns))
 
   assert len(columns) , "Must select at least one column in genquery"
 
@@ -35,12 +35,12 @@ def PREP_genquery_row_iterator ( columns, conditions, as_dict, callback ):
   ret_val = callback.msiExecGenQuery(genQueryInp , irods_types.GenQueryOut())
   genQueryOut = ret_val['arguments'][1]
   continue_index_old = 1
-  
+
   while continue_index_old > 0 and not is_CAT_NO_ROWS_FOUND(ret_val):
 
     for j in range(genQueryOut.rowCnt):
       row_as_list = [ genQueryOut.sqlResult[i].row(j) for i in range(len(column_idx)) ]
-      if as_dict : 
+      if as_dict :
         yield { k : row_as_list[v] for k,v in column_idx .items() }
       else:
         yield row_as_list
@@ -58,17 +58,17 @@ def PREP_genquery_row_iterator ( columns, conditions, as_dict, callback ):
 # ::: paged iterator returns a list of up to N rows each iteration :::
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
-class PREP_genquery_row_list_iterator (object):
+class paged_iterator (object):
 
   def __init__(self, columns, conditions, as_dict, callback, N_rows_per_page = MAX_SQL_ROWS):
 
     self.rows_per_page = min (MAX_SQL_ROWS, max(1, N_rows_per_page))
-    self.generator =  PREP_genquery_row_iterator (columns, conditions, as_dict, callback)
+    self.generator =  row_iterator (columns, conditions, as_dict, callback)
 
   def __iter__(self): return self
   def __next__(self): return self.next()
 
-  def next(self): 
+  def next(self):
     results = list( range(self.rows_per_page) )
     j = 0
     try:
@@ -81,9 +81,9 @@ class PREP_genquery_row_list_iterator (object):
 
     return results
 
-#       
+#
 #  Test the above iterators : call with (like_rhs_path , nrows_as_string)
-#       
+#
 
 def test_PREP_genquery_iterator( rule_args , callback, rei ):
   import os
@@ -100,27 +100,28 @@ def test_PREP_genquery_iterator( rule_args , callback, rei ):
   n = 0
 
   if len(requested_rowcount) > 0:
-   
+
     rows_per_page = int(requested_rowcount)
     callback.writeLine ("serverLog", "#\n#\n__query: (%d) rows at a time__"%(rows_per_page,))
-    for dObj_rows in PREP_genquery_row_list_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback,
+    for page in paged_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback,
                                                      N_rows_per_page = rows_per_page ):
       i = 0
       callback.writeLine ("serverLog", "__new_page_from_query__")
-      for dObj in dObj_rows:
+      for row in page:
         callback.writeLine ("serverLog",
-         "n={0},i={1} ;  name = {2} ; size = {3}" . format(n, i, dObj['DATA_NAME'], dObj['DATA_SIZE'] )
+         "n={0},i={1} ;  name = {2} ; size = {3}" . format(n, i, row['DATA_NAME'], row['DATA_SIZE'] )
         )
-        n += 1; i += 1
+        n += 1
+        i += 1
         nr += 1
 
   else:
 
     callback.writeLine ("serverLog", "__gen_mode_return_all_rows_from_query__")
-    for dObj in PREP_genquery_row_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback):
+    for row in row_iterator("DATA_NAME,DATA_SIZE" , conditions, True, callback):
 
       callback.writeLine ("serverLog",
-        "n = {0} ; name = {1} ; size = {2}" . format( n, dObj['DATA_NAME'], dObj['DATA_SIZE'] )
+        "n = {0} ; name = {1} ; size = {2}" . format( n, row['DATA_NAME'], row['DATA_SIZE'] )
       )
       n += 1
       nr += 1
