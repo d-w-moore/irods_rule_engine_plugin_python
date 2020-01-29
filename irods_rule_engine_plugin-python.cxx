@@ -1,6 +1,7 @@
 #include <ctime>
 #include <fstream>
 #include <list>
+#include <map>
 #include <string>
 #include <memory>
 
@@ -24,38 +25,17 @@
 
 #include "irods_rule_engine_plugin-python.hpp"
 
+struct less_msParam_t
+{
+    bool operator() (const msParam_t &a, const msParam_t & b) const {
+        return ( a.inOutStruct < b.inOutStruct || a.inpOutBuf < b.inpOutBuf || a.type < b.type);
+    }
+};
+
 irods::ms_table& get_microservice_table();
 
 // writeLine is not in the microservice table in 4.2.0 - #3408
 int writeLine(msParam_t*, msParam_t*, ruleExecInfo_t*);
-
-static int carryOverMsParam(
-    msParamArray_t *sourceMsParamArray,
-    msParamArray_t *targetMsParamArray ) {
-
-    int i;
-    msParam_t *mP, *mPt;
-    if ( sourceMsParamArray == NULL ) {
-        return 0;
-    }
-
-    for ( i = 0; i < sourceMsParamArray->len ; i++ ) {
-        mPt = sourceMsParamArray->msParam[i];
-        if ( ( mP = getMsParamByLabel( targetMsParamArray, mPt->label ) ) != NULL ) {
-            free( mP->inpOutBuf );
-            int status = replInOutStruct(mPt->inOutStruct, &mP->inOutStruct, mPt->type);
-            if ( status < 0 ) {
-                rodsLogError( LOG_ERROR, status, "%s encountered an error when calling replInOutStruct", __PRETTY_FUNCTION__);
-            }
-            mP->inpOutBuf = replBytesBuf(mPt->inpOutBuf);
-        }
-        else
-            addMsParamToArray( targetMsParamArray,
-                               mPt->label, mPt->type, mPt->inOutStruct, mPt->inpOutBuf, 1 );
-    }
-
-    return 0;
-}
 
 static int remote_exec_msvc(
     msParam_t*      _pd,
@@ -210,6 +190,35 @@ namespace {
         irods::callback& effect_handler;
         std::string rule_name;
         static bp::dict call(const bp::tuple& args, const bp::dict& ) {
+
+            static std::map<msParam_t, int, less_msParam_t> free_map {};
+            static int call_level {};
+            struct free_pointers {
+                int & lvl ;
+                free_pointers (int& lvl_) : lvl{lvl_}
+                {
+                    ++lvl;
+                }
+                ~free_pointers () {
+                    if (--lvl == 0)  {
+                        for (auto & i : free_map) {
+                            msParam_t t = i.first;
+                            if (t.type != nullptr &&
+                                ( 0==strcmp(t.type,getMsParamStringFromType<bytesBuf_t>()) ||
+                                  0==strcmp(t.type,getMsParamStringFromType<float>())    ||
+                                  0==strcmp(t.type,getMsParamStringFromType<int>())))
+                            {
+                                clearMsParam(&t, 1);
+                            }
+                        }
+                        free_map.clear();
+                    }
+                }
+            }
+            memo {call_level}
+            ;
+
+
             RuleCallWrapper& self = bp::extract<RuleCallWrapper&>(args[0]);
 
             bp::tuple rule_args_python = bp::extract<bp::tuple>(args[bp::slice(1, bp::len(args))]);
@@ -238,6 +247,7 @@ namespace {
                     strings.pop_front();
                 } else {
                     ret_list.append(object_from_msParam(msParams.front()));
+                    ++free_map[ msParams.front() ];
                     msParams.pop_front();
                 }
                 rule_args_cpp.pop_front();
