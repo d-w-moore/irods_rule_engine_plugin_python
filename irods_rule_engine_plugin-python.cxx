@@ -238,6 +238,7 @@ namespace {
                     strings.pop_front();
                 } else {
                     ret_list.append(object_from_msParam(msParams.front()));
+                    clearMsParam (&msParams.front(), 1);
                     msParams.pop_front();
                 }
                 rule_args_cpp.pop_front();
