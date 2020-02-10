@@ -1,5 +1,7 @@
 #include <type_traits>
 #include <functional>
+#include <cstring>
+#include <cstdlib>
 
 #include "boost/python.hpp"
 #include "boost/any.hpp"
@@ -14,6 +16,20 @@
 #include "array_ref.hpp"
 
 namespace bp = boost::python;
+
+template <typename T,
+          typename std::enable_if<
+                                  std::is_pod<T>::value
+                                 >::type * = nullptr
+         >
+T* malloc_and_copy ( const T& src )
+{
+    T* ptr = static_cast<T*>( malloc(sizeof(T)) );
+    if (ptr != nullptr) {
+        std::memcpy(ptr, &src, sizeof(T));
+    }
+    return ptr;
+}
 
 namespace boost {
     namespace python {
@@ -98,7 +114,7 @@ namespace {
             return {
                 .label=nullptr,
                 .type=strdup(getMsParamStringFromType<int>()),
-                .inOutStruct=new int{extr()},
+                .inOutStruct=malloc_and_copy(extr()),
                 .inpOutBuf=nullptr};
         } else {
             THROW(SYS_NOT_SUPPORTED, "Attempted to extract a boost::python::object containing a non-conforming type");
@@ -112,7 +128,7 @@ namespace {
             return {
                 .label=nullptr,
                 .type=strdup(getMsParamStringFromType<float>()),
-                .inOutStruct=new float{extr()},
+                .inOutStruct=malloc_and_copy(extr()),
                 .inpOutBuf=nullptr};
         } else {
             THROW(SYS_NOT_SUPPORTED, "Attempted to extract a boost::python::object containing a non-conforming type");
@@ -127,8 +143,9 @@ namespace {
             return {
                 .label=nullptr,
                 .type=strdup(getMsParamStringFromType<bytesBuf_t>()),
-                .inOutStruct=new int{buf.len},
-                .inpOutBuf=new bytesBuf_t{buf}};
+                .inOutStruct= malloc_and_copy( buf.len ),
+                .inpOutBuf=   malloc_and_copy( bytesBuf_t{buf} )
+            };
         } else {
             THROW(SYS_NOT_SUPPORTED, "Attempted to extract a boost::python::object containing a non-conforming type");
         }
