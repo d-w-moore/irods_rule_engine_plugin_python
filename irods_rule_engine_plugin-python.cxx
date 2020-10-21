@@ -322,6 +322,15 @@ namespace
     }
 } // anonymous namespace
 
+
+#if PY_VERSION_HEX >= 0x03000000
+extern "C" {
+  PyObject* PyInit_plugin_wrappers();
+  PyObject* PyInit_irods_types();
+  PyObject* PyInit_irods_errors();
+}
+#endif // PY_VERSION_HEX
+
 irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 {
     // TODO Enable config-selectable Python version
