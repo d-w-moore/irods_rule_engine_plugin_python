@@ -14,6 +14,9 @@
 #include "boost/filesystem/operations.hpp"
 #include "boost/filesystem/operations.hpp"
 
+#define IRODS_QUERY_ENABLE_SERVER_SIDE_API 1
+#include "irods_query.hpp"
+
 #include "rodsErrorTable.h"
 #include "irods_error.hpp"
 #include "irods_re_plugin.hpp"
@@ -311,6 +314,15 @@ namespace
         }
     }; // struct CallbackWrapper
 
+    intptr_t fnq (rsComm_t* p) {
+        irods::query<rsComm_t>  q { p, "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'" };
+        return intptr_t(p);
+    }
+
+    BOOST_PYTHON_MODULE(irods_query)
+    {
+      bp::def("fnq",fnq);
+    }
     BOOST_PYTHON_MODULE(plugin_wrappers)
     {
         bp::class_<RuleCallWrapper>("RuleCallWrapper", bp::no_init)
@@ -334,10 +346,12 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 #if PY_VERSION_HEX < 0x03000000
         PyImport_AppendInittab("plugin_wrappers", &initplugin_wrappers);
         PyImport_AppendInittab("irods_types", &initirods_types);
+        PyImport_AppendInittab("irods_query", &initirods_query);
 #else
         PyImport_AppendInittab("plugin_wrappers", &PyInit_plugin_wrappers);
         PyImport_AppendInittab("irods_types", &PyInit_irods_types);
 #endif
+
         Py_InitializeEx(0);
         std::lock_guard<std::recursive_mutex> lock{python_mutex};
         boost::filesystem::path full_path( boost::filesystem::current_path() );
@@ -352,6 +366,7 @@ irods::error start(irods::default_re_ctx&, const std::string& _instance_name)
 
         bp::object plugin_wrappers = bp::import("plugin_wrappers");
         bp::object irods_types = bp::import("irods_types");
+        bp::object irods_query = bp::import("irods_query");
 
         StringFromPythonUnicode::register_converter();
     }
@@ -499,8 +514,10 @@ irods::error exec_rule(const irods::default_re_ctx&,
         bp::object core_module = bp::import("core");
         bp::object core_namespace = core_module.attr("__dict__");
         bp::object irods_types = bp::import("irods_types");
+        bp::object irods_query = bp::import("irods_query");
 
         core_namespace["irods_types"] = irods_types;
+        core_namespace["irods_query"] = irods_query;
         bp::object rule_function = core_module.attr(rule_name.c_str());
 
         const auto rei = get_rei_from_effect_handler(effect_handler);
@@ -628,12 +645,14 @@ irods::error exec_rule_text(const irods::default_re_ctx&,
             bp::object main_module = bp::import("__main__");
             bp::object main_namespace = main_module.attr("__dict__");
             bp::object irods_types = bp::import("irods_types");
+            bp::object irods_query = bp::import("irods_query");
 
             // Import global INPUT and OUTPUT variables
             main_namespace["global_vars"] = global_vars_python;
 
             // Import global constants
             main_namespace["irods_types"] = irods_types;
+            main_namespace["irods_query"] = irods_query;
 
             // Parse input rule_text into useable Python fcns
             // Delete first line ("@external")
@@ -735,6 +754,7 @@ irods::error exec_rule_expression(irods::default_re_ctx&,
         // Parse input rule_text into useable Python fcns
         bp::object main_module = bp::import("__main__");
         bp::object irods_types = bp::import("irods_types");
+        bp::object irods_query = bp::import("irods_query");
         bp::object main_namespace = main_module.attr("__dict__");
 
         // Import global INPUT and OUTPUT variables
@@ -742,6 +762,7 @@ irods::error exec_rule_expression(irods::default_re_ctx&,
 
         // Import globals
         main_namespace["irods_types"] = irods_types;
+        main_namespace["irods_query"] = irods_query;
 
         // Add def expressionFcn(rule_args, callback):\n to start of rule text
         std::string rule_name = "expressionFcn";

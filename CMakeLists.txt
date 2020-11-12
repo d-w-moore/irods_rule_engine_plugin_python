@@ -90,7 +90,15 @@ set(
       irods_server
       )
 
-  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS})
+  target_compile_definitions(${PLUGIN} PRIVATE ${IRODS_RULE_ENGINE_PYTHON_PLUGIN_COMPILE_DEFINITIONS} ${IRODS_COMPILE_DEFINITIONS}
+                                             RODS_SERVER
+                                             IRODS_QUERY_ENABLE_SERVER_SIDE_API
+                                             RODS_ENABLE_SYSLOG
+                                             IRODS_FILESYSTEM_ENABLE_SERVER_SIDE_API
+                                             IRODS_IO_TRANSPORT_ENABLE_SERVER_SIDE_API
+                                             SPDLOG_FMT_EXTERNAL
+                                             SPDLOG_NO_TLS
+  )
   #target_compile_options(${PLUGIN} PRIVATE -Wno-write-strings)
   set_property(TARGET ${PLUGIN} PROPERTY CXX_STANDARD ${IRODS_CXX_STANDARD})
 
