@@ -314,9 +314,40 @@ namespace
         }
     }; // struct CallbackWrapper
 
-    intptr_t fnq (rsComm_t* p) {
-        irods::query<rsComm_t>  q { p, "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'" };
-        return intptr_t(p);
+/*
+
+*/
+
+std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GROUP ug inner join R_USER_MAIN u on ug.group_user_id" \
+                                " = u.user_id where user_type_name = 'rodsgroup' and ug.user_id = (select "                         \
+                                "user_id from R_USER_MAIN where user_name = ? and user_type_name != 'rodsgroup')"
+;
+
+//---------- Specific query in core.py ------------
+// import irods_query
+//
+// def mmain(arg,cbk,rei):
+//   i = irods_query.fnq(rei.rsComm)
+//   cbk.writeLine('stdout',hex(i))
+//   cbk.writeLine('stdout',str(rei.rsComm))
+//---------- 
+//                 "select coll_name, data_name from r_data_main as d1 join r_coll_main as c on d1.coll_id = c.coll_id  "
+ //                "where not exists (select 1 from r_data_main as d2 join r_objt_metamap on d2.data_id = r_objt_metamap.object_id join  "
+  //                                               "r_meta_main on r_meta_main.meta_id = r_objt_metamap.meta_id where meta_attr_name = ? "
+   //                                              "and meta_attr_value = ? and d1.data_name = d2.data_name); "
+
+    std::vector<std::string> args{"dan"};
+    int fnq (rsComm_t* comm) { int i=0;
+        irods::query<rsComm_t>  q { comm, 
+                                    listGroupsForUser// "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'"
+                                    ,&args,"", // zone_hint
+                                    0,0,irods::query<rsComm_t>::query_type::SPECIFIC
+                                  };
+        for (const auto &p : q) {
+          ++i;
+          rodsLog(LOG_NOTICE, "rodsgroups # %d = %s\n", i,(p[0].c_str()));
+        }
+        return i;
     }
 
     BOOST_PYTHON_MODULE(irods_query)
