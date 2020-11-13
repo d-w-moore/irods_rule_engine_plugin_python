@@ -31,6 +31,7 @@
 
 #define register
 #include "boost/python/slice.hpp"
+#include "boost/python/iterator.hpp"
 #include "boost/python/module_init.hpp"
 #undef register
 
@@ -349,10 +350,12 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
         }
         return i;
     }
-
     BOOST_PYTHON_MODULE(irods_query)
     {
       bp::def("fnq",fnq);
+      using Qiter= irods::query<rsComm_t>;
+      bp::class_<Qiter,boost::noncopyable>("query_iterator",bp::init<rsComm_t*,std::string>()) // simple genquery case
+       .def("__iter__",bp::iterator<Qiter>());
     }
     BOOST_PYTHON_MODULE(plugin_wrappers)
     {
