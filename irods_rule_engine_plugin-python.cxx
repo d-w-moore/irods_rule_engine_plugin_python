@@ -339,6 +339,14 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
 
     std::vector<std::string> args{"dan"};
     int fnq (rsComm_t* comm) { int i=0;
+/*
+bp::init<rsComm_t*,const std::string&, // query string
+                   const vector<string>*,   // args
+                   const std::string&,      // zone_hint,
+                   uintmax_t,               // query_limit,
+                   uintmax_t,               // row_offset,
+                   int>())                  // query_type    // GENERAL=0,SPECIFIC=1              
+*/
         irods::query<rsComm_t>  q { comm, 
                                     listGroupsForUser// "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'"
                                     ,&args,"", // zone_hint
@@ -354,8 +362,13 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
     {
       bp::def("fnq",fnq);
       using Qiter= irods::query<rsComm_t>;
-      bp::class_<Qiter,boost::noncopyable>("query_iterator",bp::init<rsComm_t*,std::string>()) // simple genquery case
-       .def("__iter__",bp::iterator<Qiter>());
+      bp::class_<Qiter,boost::noncopyable>  //.def(bp::init<rsComm_t*,std::string>()) // simple ctor -> genquery
+            ("query_iterator",bp::init<rsComm_t*            , // server comm handle
+                                       const std::string&   , // query string,
+                                       uintmax_t            , // query limit (= 0 default)
+                                       uintmax_t            , // row offset  (= 0 default)
+                                       Qiter::query_type>() ) // query type (GENERAL = 0, SPECIFIC = 1)
+        .def("__iter__",bp::iterator<Qiter>());
     }
     BOOST_PYTHON_MODULE(plugin_wrappers)
     {
