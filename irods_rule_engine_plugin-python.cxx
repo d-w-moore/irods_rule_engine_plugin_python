@@ -4,7 +4,9 @@
 #include <ctime>
 #include <fstream>
 #include <list>
+#include <vector>
 #include <string>
+#include <iterator>
 #include <memory>
 
 #include "boost/date_time.hpp"
@@ -32,6 +34,7 @@
 #define register
 #include "boost/python/slice.hpp"
 #include "boost/python/iterator.hpp"
+#include "boost/python/stl_iterator.hpp"
 #include "boost/python/module_init.hpp"
 #undef register
 
@@ -338,6 +341,11 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
    //                                              "and meta_attr_value = ? and d1.data_name = d2.data_name); "
 
     std::vector<std::string> args{"dan"};
+    int fnv ( const std::vector<std::string>* p) { // test fn for passing pointer
+        int sum=0;
+        for (const auto &i : *p) {sum += stoi(i);}
+        return sum;
+    }
     int fnq (rsComm_t* comm) { int i=0;
         irods::query<rsComm_t>  q { comm, 
                                     listGroupsForUser// "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'"
@@ -350,17 +358,78 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
         }
         return i;
     }
+
+    template<typename T>
+    void vector_assign(std::vector<T>& l, bp::object o) {
+        // Turn a Python sequence into an STL input range
+        bp::stl_input_iterator<T> begin(o), end;
+        l.assign(begin, end);
+    }
+
     BOOST_PYTHON_MODULE(irods_query)
     {
       bp::def("fnq",fnq);
+      bp::def("fnv",fnv);
       using Qiter= irods::query<rsComm_t>;
-      bp::class_<Qiter,boost::noncopyable>  //.def(bp::init<rsComm_t*,std::string>()) // simple ctor -> genquery
+/*    class A {int i; public: A(int i_){i=i_;}}; // -- experiment
+      bp::class_<A //,boost::noncopyable
+                > ("A",bp::init<int>()); */
+      bp::class_<Qiter,boost::noncopyable> qiterclass
             ("query_iterator",bp::init<rsComm_t*            , // server comm handle
-                                       const std::string&   , // query string,
+                                       const std::string&   , // query string
+                                       const std::vector<std::string>*, // _specific_query_args
+                                       const std::string& ,   // _zone_hint,
                                        uintmax_t            , // query limit (= 0 default)
                                        uintmax_t            , // row offset  (= 0 default)
-                                       Qiter::query_type>() ) // query type (GENERAL = 0, SPECIFIC = 1)
-        .def("__iter__",bp::iterator<Qiter>());
+                                       Qiter::query_type>()); // query type (GENERAL = 0, SPECIFIC = 1)
+
+/*core.py-----------------------------
+
+import irods_query as _irods_query
+from irods_query import query_iterator, vector_string, const_ptr, fnv
+
+def mmain(arg,cbk,rei):
+    args =  vector_string()
+    args.assign( ["-1","55"] )
+    pargs = const_ptr(args)
+    x = fnv(pargs);
+    x = str(x) #  str(dir(_irods_query)) #. query_iterator
+               #   x=""
+    cbk.writeLine('stdout',x)
+
+def qmain(arg,cbk,rei):
+# #i = irods_query.fnq(rei.rsComm)
+    qs = "select group_user_id, user_name from R_USER_GROUP ug inner join R_USER_MAIN u on ug.group_user_id" \
+         " = u.user_id where user_type_name = 'rodsgroup' and ug.user_id = (select "                         \
+         "user_id from R_USER_MAIN where user_name = ? and user_type_name != 'rodsgroup')"
+    args =  vector_string();
+    args.assign( ["dan"] )
+    qi = query_iterator( rei.rsComm, qs, args, "", 0, 0, 1)  # final arg = 1: specific query
+--------------------------------------*/
+/*
+  add extra ctors?
+
+      .def(bp::init<rsComm_t*            , // server comm handle
+                    const std::string&   , // query string,
+                    uintmax_t            , // query limit (= 0 default)
+                    uintmax_t            , // row offset  (= 0 default)
+                    Qiter::query_type>())  // query type (GENERAL = 0, SPECIFIC = 1)
+//---
+      .def(bp::init<rsComm_t*            , // server comm handle
+                    const std::string&>());// query string,
+*/
+
+      qiterclass.def(bp::init<rsComm_t*,const std::string&>())  // simple ctor -> genquery
+                .def("__iter__",bp::iterator<Qiter>());
+
+      using vs = std::vector<std::string>;
+      auto const_ptr = +[](vs & p)->const vs* { return &p; };
+      bp::def("const_ptr", const_ptr, bp::return_value_policy<bp::reference_existing_object>());
+
+      bp::class_<std::vector<std::string> >("vector_string")
+      .def("assign", &vector_assign<std::string>)
+      .def("__getitem__",+[](const std::vector<std::string> &obj, int i) {return obj.at(i);} );
+
     }
     BOOST_PYTHON_MODULE(plugin_wrappers)
     {
