@@ -35,6 +35,7 @@
 #include "boost/python/slice.hpp"
 #include "boost/python/iterator.hpp"
 #include "boost/python/stl_iterator.hpp"
+//#include "boost/python/enum.hpp"
 #include "boost/python/module_init.hpp"
 #undef register
 
@@ -346,6 +347,8 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
         for (const auto &i : *p) {sum += stoi(i);}
         return sum;
     }
+    enum mychoice {ZERO=0,ONE=1,TWO=2};
+    int fne (mychoice i) {return 0-(int)i;}
     int fnq (rsComm_t* comm) { int i=0;
         irods::query<rsComm_t>  q { comm, 
                                     listGroupsForUser// "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'"
@@ -366,11 +369,21 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
         l.assign(begin, end);
     }
 
+    using Qiter = irods::query<rsComm_t>;
+    using Qtype = Qiter::query_type; // a (non-class) enum of { GENERAL, SPECIFIC }
+
+    int fnee (Qtype i) {return 10-(int)i;} // weird dumb test
+
     BOOST_PYTHON_MODULE(irods_query)
     {
+      bp::enum_<Qtype> ("query_type")     .value("GENERAL", Qiter::GENERAL)
+                                          .value("SPECIFIC", Qiter::SPECIFIC)
+                                          .export_values();
+      bp::def("fnee",fnee);
+
       bp::def("fnq",fnq);
+      bp::def("fne",fne);
       bp::def("fnv",fnv);
-      using Qiter= irods::query<rsComm_t>;
 /*    class A {int i; public: A(int i_){i=i_;}}; // -- experiment
       bp::class_<A //,boost::noncopyable
                 > ("A",bp::init<int>()); */
@@ -382,6 +395,8 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
                                        uintmax_t            , // query limit (= 0 default)
                                        uintmax_t            , // row offset  (= 0 default)
                                        Qiter::query_type>()); // query type (GENERAL = 0, SPECIFIC = 1)
+
+
 
 /*core.py-----------------------------
 
