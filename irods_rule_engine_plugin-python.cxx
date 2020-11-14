@@ -339,14 +339,6 @@ std::string listGroupsForUser = "select group_user_id, user_name from R_USER_GRO
 
     std::vector<std::string> args{"dan"};
     int fnq (rsComm_t* comm) { int i=0;
-/*
-bp::init<rsComm_t*,const std::string&, // query string
-                   const vector<string>*,   // args
-                   const std::string&,      // zone_hint,
-                   uintmax_t,               // query_limit,
-                   uintmax_t,               // row_offset,
-                   int>())                  // query_type    // GENERAL=0,SPECIFIC=1              
-*/
         irods::query<rsComm_t>  q { comm, 
                                     listGroupsForUser// "select USER_GROUP_NAME where USER_TYPE = 'rodsgroup'"
                                     ,&args,"", // zone_hint
