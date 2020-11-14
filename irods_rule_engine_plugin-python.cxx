@@ -35,7 +35,7 @@
 #include "boost/python/slice.hpp"
 #include "boost/python/iterator.hpp"
 #include "boost/python/stl_iterator.hpp"
-//#include "boost/python/enum.hpp"
+#include "boost/python/enum.hpp"
 #include "boost/python/module_init.hpp"
 #undef register
 
