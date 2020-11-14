@@ -347,17 +347,27 @@ namespace
 
 /* ----------------- core.py -----------------
 import irods_query as _irods_query
-from irods_query import query_iterator, vector_string, const_ptr, fnv
+from irods_query import query_iterator, vector_string
 def qmain(arg,cbk,rei):
-    qs = "select group_user_id, user_name from R_USER_GROUP ug inner join R_USER_MAIN u on ug.group_user_id" \
-         " = u.user_id where user_type_name = 'rodsgroup' and ug.user_id = (select "                         \
-         "user_id from R_USER_MAIN where user_name = ? and user_type_name != 'rodsgroup')"
+    q_general  = "select USER_GROUP_ID, USER_GROUP_NAME where USER_NAME = 'dan' and USER_GROUP_NAME != 'rodsgroup'"
+    q_specific = "select group_user_id, user_name from R_USER_GROUP ug inner join R_USER_MAIN u on ug.group_user_id" \
+                 " = u.user_id where user_type_name = 'rodsgroup' and ug.user_id = (select "                         \
+                 "user_id from R_USER_MAIN where user_name = ? and user_type_name != 'rodsgroup')"
     args =  vector_string();
-    args.assign( ["dan"] )
-    qi = query_iterator( rei.rsComm, qs, args, "", 0, 0, _irods_query.query_type.SPECIFIC )
+    args.assign( ['dan','rodsgroup'] )
+    n_arg =  arg[0]
+    if n_arg == "2":
+      # -- general query
+      qi = query_iterator( rei.rsComm, q_general )
+    elif n_arg == "5":
+      # -- specific but no args passed
+      # test with: iadmin asq "<sql>" sq1 where sql like above but "?" replaced by eg "'username'"
+      qi = query_iterator( rei.rsComm, "sq1", 0, 0, _irods_query.query_type.SPECIFIC )
+    elif n_arg == "7":
+      # test with: iadmin asq "<sql>" sq2arg where sql like above but "'rodsadmin'" replaced by "?"
+      qi = query_iterator( rei.rsComm, 'sq2arg', args, "", 0, 0, _irods_query.query_type.SPECIFIC )
     for y in qi:
-      cbk.writeLine('stderr','id = ' + str( y[0] ) + '; name = ' + str(y[1]))
-
+      cbk.writeLine('stderr','id = {y[0]} ; name = {y[1]}'.format(**locals()) )
 --------------------------------------*/
 
       qiterclass.def(bp::init<rsComm_t*,const std::string&>())  // either query type but without bind args
