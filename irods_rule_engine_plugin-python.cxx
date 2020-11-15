@@ -382,7 +382,8 @@ def qmain(arg,cbk,rei):
 
       bp::class_<std::vector<std::string> >("vector_string")
       .def("assign", &vector_assign<std::string>)
-      .def("__getitem__",+[](const std::vector<std::string> &obj, int i) {return obj.at(i);} );
+      .def("__getitem__",+[](const std::vector<std::string> &obj, int i) {return obj.at(i);} )
+      .def("__len__",&vs::size);
     }
 
     BOOST_PYTHON_MODULE(plugin_wrappers)
