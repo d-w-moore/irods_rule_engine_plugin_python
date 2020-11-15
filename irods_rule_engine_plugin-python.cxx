@@ -345,31 +345,6 @@ namespace
                                        uintmax_t            , // row offset  (= 0 default)
                                        Qiter::query_type>()); // query type (GENERAL = 0, SPECIFIC = 1)
 
-/* ----------------- core.py -----------------
-import irods_query as _irods_query
-from irods_query import query_iterator, vector_string
-def qmain(arg,cbk,rei):
-    q_general  = "select USER_GROUP_ID, USER_GROUP_NAME where USER_NAME = 'dan' and USER_GROUP_NAME != 'rodsgroup'"
-    q_specific = "select group_user_id, user_name from R_USER_GROUP ug inner join R_USER_MAIN u on ug.group_user_id" \
-                 " = u.user_id where user_type_name = 'rodsgroup' and ug.user_id = (select "                         \
-                 "user_id from R_USER_MAIN where user_name = ? and user_type_name != 'rodsgroup')"
-    args =  vector_string();
-    args.assign( ['dan','rodsgroup'] )
-    n_arg =  arg[0]
-    if n_arg == "2":
-      # -- general query
-      qi = query_iterator( rei.rsComm, q_general )
-    elif n_arg == "5":
-      # -- specific but no args passed
-      # test with: iadmin asq "<sql>" sq1 where sql like above but "?" replaced by eg "'username'"
-      qi = query_iterator( rei.rsComm, "sq1", 0, 0, _irods_query.query_type.SPECIFIC )
-    elif n_arg == "7":
-      # test with: iadmin asq "<sql>" sq2arg where sql like above but "'rodsadmin'" replaced by "?"
-      qi = query_iterator( rei.rsComm, 'sq2arg', args, "", 0, 0, _irods_query.query_type.SPECIFIC )
-    for y in qi:
-      cbk.writeLine('stderr','id = {y[0]} ; name = {y[1]}'.format(**locals()) )
---------------------------------------*/
-
       qiterclass.def(bp::init<rsComm_t*,const std::string&>())  // either query type but without bind args
       .def(bp::init<rsComm_t*            , // server comm handle
                     const std::string&   , // query string,
@@ -378,12 +353,12 @@ def qmain(arg,cbk,rei):
                     Qiter::query_type>())  // query type (GENERAL = 0, SPECIFIC = 1)
                 .def("__iter__",bp::iterator<Qiter>());
 
-      using vs = std::vector<std::string>;
+      using Vs = std::vector<std::string>;
 
-      bp::class_<std::vector<std::string> >("vector_string")
+      bp::class_<std::vector<std::string> >("vector_of_string")
       .def("assign", &vector_assign<std::string>)
       .def("__getitem__",+[](const std::vector<std::string> &obj, int i) {return obj.at(i);} )
-      .def("__len__",&vs::size);
+      .def("__len__",&Vs::size);
     }
 
     BOOST_PYTHON_MODULE(plugin_wrappers)
