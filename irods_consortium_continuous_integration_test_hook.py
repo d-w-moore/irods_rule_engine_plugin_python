@@ -21,6 +21,8 @@ def main():
     irods_python_ci_utilities.install_os_packages_from_files([os.path.join(plugin_dir, entry) for entry in os.listdir(plugin_dir)])
     irods_python_ci_utilities.subprocess_get_output(['ls', '-ld', '/etc/irods'], check_rc=True)
     irods_python_ci_utilities.subprocess_get_output(['echo','====================================================='], check_rc=True)
+    irods_python_ci_utilities.subprocess_get_output(['ps', 'auxw'], check_rc=True)
+    irods_python_ci_utilities.subprocess_get_output(['echo','====================================================='], check_rc=True)
     irods_python_ci_utilities.subprocess_get_output(['sudo', 'su', '-', 'irods', '-c', 'python2 scripts/setup_python_rule_engine_as_only_rule_engine.py'], check_rc=True)
 
     test_output_file = 'log/test_output.log'
