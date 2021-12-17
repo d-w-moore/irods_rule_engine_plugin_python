@@ -22,6 +22,11 @@ def main():
     irods_python_ci_utilities.subprocess_get_output(['sudo', 'su', '-', 'irods', '-c', 'python2 scripts/setup_python_rule_engine_as_only_rule_engine.py'], check_rc=True)
 
     test_output_file = 'log/test_output.log'
+
+    import subprocess
+    p = subprocess.Popen(['ps','auxw'])
+    print('return code of ps auxw -> ',p.wait())
+
     try:
         irods_python_ci_utilities.subprocess_get_output(['sudo', 'su', '-', 'irods', '-c', 'python2 scripts/run_tests.py --xml_output --run_python_suite > {0} 2>&1'.format(test_output_file)], check_rc=True)
     finally:
