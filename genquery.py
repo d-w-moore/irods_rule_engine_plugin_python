@@ -267,7 +267,11 @@ class Query(object):
                     # So instead, we run the query twice manually. This should
                     # perform only slightly worse.
                     # [1]: https://github.com/irods/irods/blob/4.2.6/plugins/database/src/general_query.cpp#L2393
-                    self._total = self.copy(limit=0, options=self.options|Option.RETURN_TOTAL_ROW_COUNT).total_rows()
+                    self._total = self.copy(
+                        limit=0,
+                        offset=0,
+                        options=self.options|Option.RETURN_TOTAL_ROW_COUNT
+                    ).total_rows()
 
         return self._total
 
