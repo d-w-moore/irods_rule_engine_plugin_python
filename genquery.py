@@ -183,14 +183,14 @@ class Query(object):
     @property
     def parameters(self): return dict((name,getattr(self,name)) for name in self.__parameter_names)
 
-    def copy(self,**parameter_changes):
-        incorrect = list(k for k in parameter_changes if k not in self.__parameter_names)
+    def copy(self,**options):
+        incorrect = list(k for k in options if k not in self.__parameter_names)
         if incorrect:
             raise GenQuery_Options_Spec_Error('Incorrect option(s) to Query: '+', '.join(incorrect))
-        # let `parameter_changes' override but not duplicate `self.parameters' in the keyword argument list
-        keyword_items_list = list(self.parameters.items())  + list(parameter_changes.items())
+        # let `options' override but not duplicate `self.parameters' in the keyword argument list
+        keyword_items_list = list(self.parameters.items())  + list(options.items())
         return Query(self.callback, **dict(keyword_items_list))
-        #return Query(self.callback, **{**self.parameters, **parameter_changes})
+        #return Query(self.callback, **{**self.parameters, **options})
 
     def exec_if_not_yet_execed(self):
         """Query execution is delayed until the first result or total row count is requested."""
