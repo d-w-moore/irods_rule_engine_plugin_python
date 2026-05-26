@@ -1,6 +1,6 @@
-from  genquery import Query, Option,  AS_DICT
 import datetime
-from pprint import pformat
+import pprint as pp
+from genquery import Query, Option, AS_DICT
 
 class Err(Exception): pass
 
@@ -8,38 +8,38 @@ def main(rule_args, callback, rei):
     colls = []
     home='/tempZone/home/rods'
     now = f'{datetime.datetime.now():%s.%f}'
+    coll_names_lowercase = ['issue-258-'+str(i) for i in range(10)]
+    
     try:
-        for coll in ('Test','tEST','TEST','test'):
-            retv=callback.msiCollCreate((coll:=f'{home}/{now}/{coll}'), '1', 999)
+        for coll in (coll_names_lowercase + [_.capitalize() for _ in coll_names_lowercase]):
+            retv = callback.msiCollCreate((coll:=f'{home}/{now}/{coll}'), '1', -1)
             if retv['arguments'][2] != 0:
-                callback.writeLine('stderr',f'error in creation: {retv = }')
-                return 1
+                raise Err(f'could not create test collection {coll}')
             else:
-                callback.writeLine('stderr',f'newdir {coll!r}')
                 colls.append(coll)
+
         query = Query(
-            callback, ["COLL_NAME"],
-            """COLL_NAME like '%/test'""" 
-#           f""" and COLL_PARENT_NAME = '{home}/{now}'"""
-,
-            case_sensitive=False,
-            offset=1,
-            output=AS_DICT
+            callback, ["COLL_NAME","COLL_PARENT_NAME"],
+            """COLL_NAME like '%/issue%'"""     f""" and COLL_PARENT_NAME = '{home}/{now}'"""
+            , case_sensitive=False
+            , offset=1
         )
+
         rows = list(query)
         total = query.total_rows()
 
-        if len(rows) != len(colls)-1 or total != len(colls):
-            #raise Err('Incorrect Result')
-            callback.writeLine('stderr',f'fail: {pformat(rows) = !s}; {total = }; {len(colls) = }')
-        else:
-            callback.writeLine('stderr','pass')
+        if len(rows) != len(colls)-1:
+            callback.writeLine('stderr',f'{rows=}')
+            raise Err('Incorrect result')
 
+        if total != len(colls):
+            raise Err('Incorrect total')
+
+        raise Err
+    except:
+        return -1
     finally:
-        pass
-        for coll in colls:
-            retv = callback.msiRmColl(coll,'forceFlag=',999)
-        callback.writeLine('stderr','finally')
+        retv = callback.msiRmColl(f'{home}/{now}','forceFlag=',-1)
 
 INPUT null
 OUTPUT ruleExecOut
