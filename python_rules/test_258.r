@@ -9,7 +9,7 @@ def main(rule_args, callback, rei):
     home='/tempZone/home/rods'
     now = f'{datetime.datetime.now():%s.%f}'
     coll_names_lowercase = ['issue-258-'+str(i) for i in range(10)]
-    
+
     try:
         for coll in (coll_names_lowercase + [_.capitalize() for _ in coll_names_lowercase]):
             retv = callback.msiCollCreate((coll:=f'{home}/{now}/{coll}'), '1', -1)
