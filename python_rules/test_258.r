@@ -20,7 +20,7 @@ def main(rule_args, callback, rei):
 
         query = Query(
             callback, ["COLL_NAME","COLL_PARENT_NAME"],
-            """COLL_NAME like '%/issue%'"""     f""" and COLL_PARENT_NAME = '{home}/{now}'"""
+            f"""COLL_NAME like '%/issue%' and COLL_PARENT_NAME = '{home}/{now}'"""
             , case_sensitive=False
             , offset=1
         )
