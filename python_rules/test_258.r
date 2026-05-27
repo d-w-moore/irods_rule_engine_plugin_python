@@ -1,6 +1,6 @@
 import datetime
 import pprint as pp
-from genquery import Query, Option, AS_DICT
+from genquery import Query
 
 class Err(Exception): pass
 
