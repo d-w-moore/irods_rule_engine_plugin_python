@@ -42,7 +42,7 @@ def main(rule_args, callback, rei):
     except:
         return -1
     finally:
-        retv = callback.msiRmColl(f'{home}/{now}','forceFlag=',-1)
+        callback.msiRmColl(f'{home}/{now}','forceFlag=',-1)
 
 INPUT null
 OUTPUT ruleExecOut
