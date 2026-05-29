@@ -1,5 +1,4 @@
 import datetime
-import pprint as pp
 from genquery import Query
 
 class Err(Exception): pass
