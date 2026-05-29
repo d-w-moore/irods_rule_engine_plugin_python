@@ -7,8 +7,6 @@ def main(rule_args, callback, rei):
     colls = []
     home='/tempZone/home/rods'
     now = f'{datetime.datetime.now():%s.%f}'
-
-    # Keep the following an even number:
     n_base_names = 10
 
     coll_names_lowercase = ['issue-258-'+str(i) for i in range(n_base_names)]
@@ -33,19 +31,27 @@ def main(rule_args, callback, rei):
                         , limit=limit_
                     )
 
+                    # We expect double the total number of matching rows for case sensitivity being turned off,
+                    # due to the capitalized versions showing up in the query.
                     expected_total_rows = n_base_names * (1 if case_sensitive_ else 2)
+
+                    # We expect this relationship to hold for how offset and limit options affect number of
+                    # matching rows actually returned.
                     expected_result_rows = min(
                         max(0, expected_total_rows - offset_),
                         limit_ if limit_ is not None else expected_total_rows
                     )
 
-                    # Assert that offset=1 produced the correct number of row results.
-                    if (got_result_rows:=len(list(query))) != expected_result_rows:
-                        raise Err(f'{expected_result_rows=}; {got_result_rows=}')
+                    # Assert that the combination of options selected returned the expected number of row results.
+                    received_result_rows = len(list(query))
+                    if received_result_rows != expected_result_rows:
+                        raise Err(f'{expected_result_rows=}; {received_result_rows=}')
             
-                    # Assert that total_rows found the correct number of total matching rows.
-                    if (got_total_rows:=query.total_rows()) != expected_total_rows:
-                        raise Err(f'{expected_total_rows=}; {got_total_rows=}')
+                    # Assert that total_rows() properly found how many rows, in all, successfully matched the
+                    # query condition.  This number is actually independent of the values of offset_ and limit_.
+                    received_total_rows = query.total_rows()
+                    if received_total_rows != expected_total_rows:
+                        raise Err(f'{expected_total_rows=}; {received_total_rows=}')
     except:
         return -1
     finally:
