@@ -14,7 +14,7 @@ def main(rule_args, callback, rei):
     coll_names_lowercase = ['issue-258-'+str(i) for i in range(n_base_names)]
 
     # LINE COUNTER
-    n = -1
+    line_counter = -1
     try:
         for coll in (coll_names_lowercase + [_.capitalize() for _ in coll_names_lowercase]):
             retv = callback.msiCollCreate((coll:=f'{home}/{now}/{coll}'), '1', -1)
@@ -53,7 +53,7 @@ def main(rule_args, callback, rei):
                     )
 
                     if print_test_vector_and_quit:
-                        if 0 == (n:=n+1):
+                        if 0 == (line_counter := line_counter + 1):
                             callback.writeLine("stderr", "{case_sensitive_} {offset_} {limit_} {expected_result_rows} {expected_total_rows}")
                         callback.writeLine("stderr", f"{case_sensitive_!r:^17} {offset_:^9} {limit_!s:^8} {expected_result_rows:^22} {expected_total_rows:^21}")
                         continue
