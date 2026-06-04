@@ -23,20 +23,20 @@ def main(rule_args, callback, rei):
             else:
                 colls.append(coll)
 
-# EXPECTED RESULTS FROM THE VARIOUS TEST VECTOR COMBINATIONS: (re-generate using argument '*PRINT_TEST_VECTOR_AND_QUIT="yes"')
-#       {case_sensitive_} {offset_} {limit_} {expected_result_rows} {expected_total_rows}
-#             False           0       None             20                    20
-#             False           0        4               4                     20
-#             False           0        14              14                    20
-#             False           3       None             17                    20
-#             False           3        4               4                     20
-#             False           3        14              14                    20
-#             True            0       None             10                    10
-#             True            0        4               4                     10
-#             True            0        14              10                    10
-#             True            3       None             7                     10
-#             True            3        4               4                     10
-#             True            3        14              7                     10
+        # EXPECTED RESULTS FROM THE VARIOUS TEST VECTOR COMBINATIONS: (re-generate using argument '*PRINT_TEST_VECTOR_AND_QUIT="yes"')
+        #       {case_sensitive_} {offset_} {limit_} {expected_result_rows} {expected_total_rows}
+        #             False           0       None             20                    20
+        #             False           0        4               4                     20
+        #             False           0        14              14                    20
+        #             False           3       None             17                    20
+        #             False           3        4               4                     20
+        #             False           3        14              14                    20
+        #             True            0       None             10                    10
+        #             True            0        4               4                     10
+        #             True            0        14              10                    10
+        #             True            3       None             7                     10
+        #             True            3        4               4                     10
+        #             True            3        14              7                     10
 
         for case_sensitive_ in (False, True):
             for offset_ in (0,3):
